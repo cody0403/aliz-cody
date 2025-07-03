@@ -9,24 +9,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Calm Harmony -->
-    <!-- Application Structure Plan: The SPA is designed as an interactive journey to convince the user of the need for insurance, based on the provided text report. It starts with a "Reality Check" (the "Why"), then moves to a highly interactive "Cost Explorer". This explorer features a detailed Hospital Cost chart, a "Surgery Cost Simulator" for medical consumables, and a caregiver cost slider. This simulator is the core engagement piece, allowing users to build a virtual bill and feel the financial impact directly. The subsequent sections on "Major Risks" (including post-treatment costs) and a practical "Life Stage Planning" section present the problems and tailored solutions. This structure transforms the report into an active, personalized discovery tool, making the financial risks feel immediate and tangible. -->
-    <!-- Visualization & Content Choices: 
-        - Hospital Costs: Report Info -> Detailed regional hospital room costs (`表1`). Goal -> Compare. Viz -> Interactive Bar Chart (Chart.js). Interaction -> User selects region/hospital level to update chart showing cost ranges. Justification -> Direct, personalized cost comparison is more impactful than a static table.
-        - Medical Consumables: Report Info -> Common self-funded consumables from the report. Goal -> Demonstrate accumulation of "small" costs. Viz -> Interactive Checklist/Calculator. Interaction -> User checks boxes for different consumables; a total cost dynamically updates. Justification -> This is the key interactive element, turning a static list into a shocking "shopping cart" experience.
-        - Caregiver Costs: Report Info -> Daily caregiver rates. Goal -> Show cost over time. Viz -> HTML/JS Slider. Interaction -> User drags slider to see total cost accumulate. Justification -> Tactile interaction makes the rapidly increasing cost memorable.
-        - Major Illness Costs: Report Info -> First-year treatment costs (`表2` from the text report). Goal -> Inform/Shock. Viz -> Icon-based HTML/CSS Cards. Interaction -> Static display for clarity. Justification -> Breaks down overwhelming data into digestible, visually distinct chunks.
-        - Post-Treatment Costs: Report Info -> Nutrition and assistive device costs. Goal -> Highlight hidden long-term costs. Viz -> Formatted static lists. Justification -> Clearly presents ongoing expenses post-hospitalization.
-        - Life Stage Planning: Report Info -> Planning advice from the report's conclusion. Goal -> Provide actionable advice. Viz -> Tabbed Interface. Interaction -> Click tabs (Fresher, Pillar, Retiree) to switch content. Justification -> Standard, effective UI for presenting categorized information.
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; scroll-behavior: smooth; }
+        body { font-family: 'Noto Sans TC', sans-serif; }
         .chart-container { position: relative; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; height: 380px; max-height: 45vh; }
         @media (max-width: 768px) { .chart-container { height: 320px; max-height: 50vh; } }
         .tab-button.active { border-color: #0d9488; color: #0d9488; background-color: #f0fdfa; }
         .plan-card { transition: all 0.3s ease-in-out; }
         .consumable-item:has(input:checked) { background-color: #f0fdfa; border-color: #5eead4; }
+        .main-section { display: none; }
+        .nav-link.active { color: #0d9488; font-weight: 700; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
@@ -34,289 +25,285 @@
     <header class="bg-white shadow-md sticky top-0 z-50">
         <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <div class="flex-shrink-0">
-                    <h1 class="text-xl md:text-2xl font-bold text-teal-700">您的醫療保障計畫書</h1>
-                </div>
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="#reality" class="text-slate-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">現實檢視</a>
-                        <a href="#costs" class="text-slate-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">互動成本探索</a>
-                        <a href="#risks" class="text-slate-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">重大風險應對</a>
-                        <a href="#planning" class="text-slate-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">人生階段規劃</a>
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                         <h1 class="text-xl md:text-2xl font-bold text-teal-700 cursor-pointer" onclick="showPage('hero')">您的醫療保障計畫書</h1>
+                    </div>
+                     <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4" id="main-nav">
+                            <a href="javascript:void(0);" onclick="showPage('reality')" data-page="reality" class="nav-link text-slate-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">現實檢視</a>
+                            <a href="javascript:void(0);" onclick="showPage('costs')" data-page="costs" class="nav-link text-slate-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">互動成本探索</a>
+                            <a href="javascript:void(0);" onclick="showPage('risks')" data-page="risks" class="nav-link text-slate-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">重大風險應對</a>
+                            <a href="javascript:void(0);" onclick="showPage('planning')" data-page="planning" class="nav-link text-slate-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">人生階段規劃</a>
+                        </div>
                     </div>
                 </div>
                 <div class="md:hidden">
                     <select id="mobile-nav" class="bg-white border border-slate-300 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
-                        <option value="#hero">導覽</option>
-                        <option value="#reality">現實檢視</option>
-                        <option value="#costs">互動成本探索</option>
-                        <option value="#risks">重大風險應對</option>
-                        <option value="#planning">人生階段規劃</option>
+                        <option value="hero">首頁</option>
+                        <option value="reality">現實檢視</option>
+                        <option value="costs">互動成本探索</option>
+                        <option value="risks">重大風險應對</option>
+                        <option value="planning">人生階段規劃</option>
                     </select>
                 </div>
             </div>
         </nav>
     </header>
 
-    <main id="hero" class="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
-        <h2 class="text-3xl md:text-5xl font-bold tracking-tight text-slate-900">醫療的選擇權，來自財務的準備。</h2>
-        <p class="mt-4 md:mt-6 max-w-2xl mx-auto text-lg text-slate-600">這是一份專為您打造的互動計畫書。透過親手操作，您將洞悉那些隱藏在手術同意書背後的真實數字，並了解如何建構一個能真正守護您與家人的保障計畫。</p>
-        <a href="#reality" class="mt-8 inline-block bg-teal-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-teal-700 transition-colors">開始探索</a>
-    </main>
+    <div id="app-container">
+        <section id="hero" class="main-section container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center">
+            <h2 class="text-3xl md:text-5xl font-bold tracking-tight text-slate-900">醫療的選擇權，來自財務的準備。</h2>
+            <p class="mt-4 md:mt-6 max-w-2xl mx-auto text-lg text-slate-600">這是一份專為您打造的互動計畫書。透過親手操作，您將洞悉那些隱藏在手術同意書背後的真實數字，並了解如何建構一個能真正守護您與家人的保障計畫。</p>
+            <button onclick="showPage('reality')" class="mt-8 inline-block bg-teal-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-teal-700 transition-colors">開始探索</button>
+        </section>
 
-    <section id="reality" class="py-16 bg-white">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-slate-900">為什麼需要提前規劃？</h2>
-                <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">我們都擁有健保，但它並非萬能。當追求更好的醫療品質時，自費的鴻溝便會出現。這不僅是選擇題，更是財務題。</p>
-            </div>
-            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                <div class="bg-slate-50 p-6 rounded-lg shadow">
-                    <div class="text-5xl font-bold text-teal-600">64%</div>
-                    <p class="mt-2 font-semibold text-slate-800">醫療雜費佔比</p>
-                    <p class="mt-2 text-sm text-slate-600">住院開銷中最大宗的費用，如新式手術、藥物與醫材，健保多不給付，是需要優先轉嫁的風險。</p>
+        <section id="reality" class="main-section py-16 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">為什麼需要提前規劃？</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">我們都擁有健保，但它並非萬能。當追求更好的醫療品質時，自費的鴻溝便會出現。這不僅是選擇題，更是財務題。</p>
                 </div>
-                <div class="bg-slate-50 p-6 rounded-lg shadow">
-                    <div class="text-5xl font-bold text-teal-600">1/23</div>
-                    <p class="mt-2 font-semibold text-slate-800">重大傷病盛行率</p>
-                    <p class="mt-2 text-sm text-slate-600">台灣領有重大傷病證明者已破百萬人。這意味著每23人中就有1人，正在與重病奮戰。</p>
-                </div>
-                <div class="bg-slate-50 p-6 rounded-lg shadow">
-                    <div class="text-5xl font-bold text-teal-600">4分2秒</div>
-                    <p class="mt-2 font-semibold text-slate-800">癌症時鐘</p>
-                    <p class="mt-2 text-sm text-slate-600">根據最新統計，台灣平均每4分2秒就有1人罹癌。癌症不再是遙遠的「萬一」，而是近在眼前的機率。</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="costs" class="py-16">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-slate-900">互動成本探索</h2>
-                <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">住院一天、動一場手術，究竟要花多少錢？本區塊將報告中的數據轉化為互動工具。您可以親自操作，模擬不同情境，立即了解可能面臨的真實費用缺口。</p>
-            </div>
-
-            <div class="mt-12 bg-white p-6 md:p-8 rounded-xl shadow-lg">
-                <h3 class="text-xl font-bold mb-4 text-center">1. 住院病房差額模擬器</h3>
-                <p class="text-center text-slate-600 mb-6">想從健保房升等嗎？選擇您所在的地區與醫院等級，看看每日需額外負擔多少錢。</p>
-                <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
-                    <div class="w-full sm:w-auto">
-                        <label for="region-select" class="block text-sm font-medium text-slate-700 mb-1">選擇地區</label>
-                        <select id="region-select" class="w-full rounded-md border-slate-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
-                            <option value="北部">北部</option>
-                            <option value="中部">中部</option>
-                            <option value="南部">南部</option>
-                            <option value="東部">東部</option>
-                        </select>
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div class="bg-slate-50 p-6 rounded-lg shadow">
+                        <div class="text-5xl font-bold text-teal-600">64%</div>
+                        <p class="mt-2 font-semibold text-slate-800">醫療雜費佔比</p>
+                        <p class="mt-2 text-sm text-slate-600">住院開銷中最大宗的費用，如新式手術、藥物與醫材，健保多不給付，是需要優先轉嫁的風險。</p>
                     </div>
-                    <div class="w-full sm:w-auto">
-                        <label for="hospital-level-select" class="block text-sm font-medium text-slate-700 mb-1">選擇醫院等級</label>
-                        <select id="hospital-level-select" class="w-full rounded-md border-slate-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
-                            <option value="醫學中心">醫學中心</option>
-                            <option value="區域醫院">區域醫院</option>
-                        </select>
+                    <div class="bg-slate-50 p-6 rounded-lg shadow">
+                        <div class="text-5xl font-bold text-teal-600">1/23</div>
+                        <p class="mt-2 font-semibold text-slate-800">重大傷病盛行率</p>
+                        <p class="mt-2 text-sm text-slate-600">台灣領有重大傷病證明者已破百萬人。這意味著每23人中就有1人，正在與重病奮戰。</p>
                     </div>
-                </div>
-                <div class="chart-container">
-                    <canvas id="hospitalCostChart"></canvas>
-                </div>
-            </div>
-
-            <div class="mt-12 bg-white p-6 md:p-8 rounded-xl shadow-lg">
-                <h3 class="text-xl font-bold mb-2 text-center">2. 手術自費耗材費用模擬器</h3>
-                <p class="text-center text-slate-600 mb-6">一場手術中，每多選一樣「更好」的自費耗材，帳單會如何變化？請勾選您希望使用的項目，感受費用的真實累積。</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                    <div id="consumables-list" class="space-y-3">
-                    </div>
-                    <div class="md:row-span-3 mt-4 md:mt-0 flex flex-col justify-center items-center bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg">
-                        <p class="text-slate-700 font-medium">預估自費耗材總費用：</p>
-                        <p class="text-4xl lg:text-5xl font-bold text-teal-700 my-2" id="consumables-total-cost">NT$ 0</p>
-                        <p class="text-xs text-slate-500 text-center">這筆費用，將全數計入住院「醫療雜費」中。</p>
+                    <div class="bg-slate-50 p-6 rounded-lg shadow">
+                        <div class="text-5xl font-bold text-teal-600">4分2秒</div>
+                        <p class="mt-2 font-semibold text-slate-800">癌症時鐘</p>
+                        <p class="mt-2 text-sm text-slate-600">根據最新統計，台灣平均每4分2秒就有1人罹癌。癌症不再是遙遠的「萬一」，而是近在眼前的機率。</p>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <div class="mt-12 bg-white p-6 md:p-8 rounded-xl shadow-lg">
-                <h3 class="text-xl font-bold mb-4 text-center">3. 看護費用快速估算</h3>
-                <p class="text-center text-slate-600 mb-6">住院期間，家屬無法24小時照顧，聘請看護是筆龐大開銷。拖動下方滑桿，看看不同天數的看護費用。</p>
-                <div class="max-w-xl mx-auto">
-                    <label for="caregiver-days" class="font-medium text-slate-700">住院天數: <span id="caregiver-days-label" class="text-teal-600 font-bold">14</span> 天</label>
-                    <input id="caregiver-days" type="range" min="1" max="30" value="14" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer mt-2">
-                    <div class="mt-6 text-center bg-sky-50 border-l-4 border-sky-500 p-4 rounded-r-lg">
-                        <p class="text-slate-700">預估24小時看護總費用：</p>
-                        <p class="text-3xl font-bold text-sky-700 mt-1" id="caregiver-total-cost">NT$ 49,000</p>
-                        <p class="text-xs text-slate-500 mt-2">以每日 $3,500 元估算</p>
+        <section id="costs" class="main-section py-16">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">互動成本探索</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">住院一天、動一場手術，究竟要花多少錢？本區塊將報告中的數據轉化為互動工具。您可以親自操作，模擬不同情境，立即了解可能面臨的真實費用缺口。</p>
+                </div>
+                <div class="mt-12 bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-center">1. 住院病房差額模擬器</h3>
+                    <p class="text-center text-slate-600 mb-6">想從健保房升等嗎？選擇您所在的地區與醫院等級，看看每日需額外負擔多少錢。</p>
+                    <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mb-6">
+                        <div class="w-full sm:w-auto">
+                            <label for="region-select" class="block text-sm font-medium text-slate-700 mb-1">選擇地區</label>
+                            <select id="region-select" class="w-full rounded-md border-slate-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                                <option value="北部">北部</option>
+                                <option value="中部">中部</option>
+                                <option value="南部">南部</option>
+                                <option value="東部">東部</option>
+                            </select>
+                        </div>
+                        <div class="w-full sm:w-auto">
+                            <label for="hospital-level-select" class="block text-sm font-medium text-slate-700 mb-1">選擇醫院等級</label>
+                            <select id="hospital-level-select" class="w-full rounded-md border-slate-300 shadow-sm focus:border-teal-500 focus:ring-teal-500">
+                                <option value="醫學中心">醫學中心</option>
+                                <option value="區域醫院">區域醫院</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="hospitalCostChart"></canvas>
+                    </div>
+                </div>
+                <div class="mt-12 bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-2 text-center">2. 手術自費耗材費用模擬器</h3>
+                    <p class="text-center text-slate-600 mb-6">一場手術中，每多選一樣「更好」的自費耗材，帳單會如何變化？請勾選您希望使用的項目，感受費用的真實累積。</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        <div id="consumables-list" class="space-y-3">
+                        </div>
+                        <div class="md:row-span-3 mt-4 md:mt-0 flex flex-col justify-center items-center bg-teal-50 border-l-4 border-teal-500 p-6 rounded-r-lg">
+                            <p class="text-slate-700 font-medium">預估自費耗材總費用：</p>
+                            <p class="text-4xl lg:text-5xl font-bold text-teal-700 my-2" id="consumables-total-cost">NT$ 0</p>
+                            <p class="text-xs text-slate-500 text-center">這筆費用，將全數計入住院「醫療雜費」中。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12 bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-center">3. 看護費用快速估算</h3>
+                    <p class="text-center text-slate-600 mb-6">住院期間，家屬無法24小時照顧，聘請看護是筆龐大開銷。拖動下方滑桿，看看不同天數的看護費用。</p>
+                    <div class="max-w-xl mx-auto">
+                        <label for="caregiver-days" class="font-medium text-slate-700">住院天數: <span id="caregiver-days-label" class="text-teal-600 font-bold">14</span> 天</label>
+                        <input id="caregiver-days" type="range" min="1" max="30" value="14" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <div class="mt-6 text-center bg-sky-50 border-l-4 border-sky-500 p-4 rounded-r-lg">
+                            <p class="text-slate-700">預估24小時看護總費用：</p>
+                            <p class="text-3xl font-bold text-sky-700 mt-1" id="caregiver-total-cost">NT$ 49,000</p>
+                            <p class="text-xs text-slate-500 mt-2">以每日 $3,500 元估算</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section id="risks" class="py-16 bg-white">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-slate-900">重大風險應對策略</h2>
-                <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">人生中的巨大風暴，如重大疾病或意外失能，會帶來海嘯般的財務衝擊。了解這些風險的真實成本，是規劃的第一步。</p>
-            </div>
-
-            <div class="mt-12">
-                <h3 class="text-xl font-bold mb-6 text-center">四大錢坑疾病的真實帳本</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="plan-card bg-rose-50 border border-rose-200 p-6 rounded-lg text-center hover:shadow-xl hover:-translate-y-1">
-                        <div class="text-4xl">癌</div>
-                        <h4 class="font-bold text-lg mt-2 text-rose-800">癌症</h4>
-                        <p class="text-sm text-rose-700 mt-1">標靶/免疫治療</p>
-                        <p class="text-2xl font-bold text-rose-900 mt-4">$50萬 - $300萬+</p>
-                        <p class="text-xs text-slate-500">第一年治療預估</p>
+        <section id="risks" class="main-section py-16 bg-white">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">重大風險應對策略</h2>
+                    <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">人生中的巨大風暴，如重大疾病或意外失能，會帶來海嘯般的財務衝擊。了解這些風險的真實成本，是規劃的第一步。</p>
+                </div>
+                <div class="mt-12">
+                    <h3 class="text-xl font-bold mb-6 text-center">四大錢坑疾病的真實帳本</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="plan-card bg-rose-50 border border-rose-200 p-6 rounded-lg text-center hover:shadow-xl hover:-translate-y-1">
+                            <div class="text-4xl">癌</div>
+                            <h4 class="font-bold text-lg mt-2 text-rose-800">癌症</h4>
+                            <p class="text-sm text-rose-700 mt-1">標靶/免疫治療</p>
+                            <p class="text-2xl font-bold text-rose-900 mt-4">$50萬 - $300萬+</p>
+                            <p class="text-xs text-slate-500">第一年治療預估</p>
+                        </div>
+                        <div class="plan-card bg-sky-50 border border-sky-200 p-6 rounded-lg text-center hover:shadow-xl hover:-translate-y-1">
+                            <div class="text-4xl">風</div>
+                            <h4 class="font-bold text-lg mt-2 text-sky-800">腦中風</h4>
+                            <p class="text-sm text-sky-700 mt-1">黃金復健/長期照護</p>
+                            <p class="text-2xl font-bold text-sky-900 mt-4">$50萬 - $150萬+</p>
+                            <p class="text-xs text-slate-500">第一年治療預估</p>
+                        </div>
+                        <div class="plan-card bg-amber-50 border border-amber-200 p-6 rounded-lg text-center hover:shadow-xl hover:-translate-y-1">
+                            <div class="text-4xl">心</div>
+                            <h4 class="font-bold text-lg mt-2 text-amber-800">心肌梗塞</h4>
+                            <p class="text-sm text-amber-700 mt-1">塗藥支架/繞道手術</p>
+                            <p class="text-2xl font-bold text-amber-900 mt-4">$30萬 - $100萬+</p>
+                            <p class="text-xs text-slate-500">急性治療預估</p>
+                        </div>
+                        <div class="plan-card bg-indigo-50 border border-indigo-200 p-6 rounded-lg text-center hover:shadow-xl hover:-translate-y-1">
+                            <div class="text-4xl">腎</div>
+                            <h4 class="font-bold text-lg mt-2 text-indigo-800">洗腎</h4>
+                            <p class="text-sm text-indigo-700 mt-1">終身血液透析</p>
+                            <p class="text-2xl font-bold text-indigo-900 mt-4">$60萬+</p>
+                            <p class="text-xs text-slate-500">每年費用 (持續終身)</p>
+                        </div>
                     </div>
-                    <div class="plan-card bg-sky-50 border border-sky-200 p-6 rounded-lg text-center hover:shadow-xl hover:-translate-y-1">
-                        <div class="text-4xl">風</div>
-                        <h4 class="font-bold text-lg mt-2 text-sky-800">腦中風</h4>
-                        <p class="text-sm text-sky-700 mt-1">黃金復健/長期照護</p>
-                        <p class="text-2xl font-bold text-sky-900 mt-4">$50萬 - $150萬+</p>
-                        <p class="text-xs text-slate-500">第一年治療預估</p>
-                    </div>
-                    <div class="plan-card bg-amber-50 border border-amber-200 p-6 rounded-lg text-center hover:shadow-xl hover:-translate-y-1">
-                        <div class="text-4xl">心</div>
-                        <h4 class="font-bold text-lg mt-2 text-amber-800">心肌梗塞</h4>
-                        <p class="text-sm text-amber-700 mt-1">塗藥支架/繞道手術</p>
-                        <p class="text-2xl font-bold text-amber-900 mt-4">$30萬 - $100萬+</p>
-                        <p class="text-xs text-slate-500">急性治療預估</p>
-                    </div>
-                    <div class="plan-card bg-indigo-50 border border-indigo-200 p-6 rounded-lg text-center hover:shadow-xl hover:-translate-y-1">
-                        <div class="text-4xl">腎</div>
-                        <h4 class="font-bold text-lg mt-2 text-indigo-800">洗腎</h4>
-                        <p class="text-sm text-indigo-700 mt-1">終身血液透析</p>
-                        <p class="text-2xl font-bold text-indigo-900 mt-4">$60萬+</p>
-                        <p class="text-xs text-slate-500">每年費用 (持續終身)</p>
+                     <p class="text-center mt-6 text-sm text-slate-500">註：以上為綜合報告估算，實際費用因個人病況與選擇的療法而異。一份一次性給付的重大傷病險，能讓您在第一時間有權利選擇最好的治療。</p>
+                </div>
+                <div class="mt-16 bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold mb-6 text-center">康復之路的隱藏成本：營養與輔具</h3>
+                    <p class="text-center text-slate-600 mb-8 max-w-3xl mx-auto">治療結束不代表花費停止。為了加速恢復、提升生活品質，營養補充與輔助器材是筆龐大且持續的開銷，而這些幾乎都不在健保的給付範圍內。</p>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-amber-50 p-6 rounded-lg border border-amber-200">
+                            <h4 class="font-bold text-lg text-amber-800 mb-3">營養補充品：身體的燃料</h4>
+                            <p class="text-sm text-slate-600 mb-4">尤其在癌症治療期間，病患常因副作用導致食慾不振、體重下降。充足的營養是維持體力、完成療程的關鍵。</p>
+                            <ul class="space-y-3">
+                                <li class="flex justify-between items-center border-b border-amber-200 pb-2">
+                                    <span class="text-slate-700">癌症專用營養配方</span>
+                                    <span class="font-semibold text-amber-900">每月 $8,000+</span>
+                                </li>
+                                <li class="flex justify-between items-center border-b border-amber-200 pb-2">
+                                    <span class="text-slate-700">高蛋白/均衡營養品</span>
+                                    <span class="font-semibold text-amber-900">每月 $5,000+</span>
+                                </li>
+                                <li class="flex justify-between items-center">
+                                    <span class="text-slate-700">其他保健食品</span>
+                                    <span class="font-semibold text-amber-900">因人而異</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="bg-cyan-50 p-6 rounded-lg border border-cyan-200">
+                            <h4 class="font-bold text-lg text-cyan-800 mb-3">輔助器材：生活的支撐</h4>
+                            <p class="text-sm text-slate-600 mb-4">中風或意外失能後，為了維持基本生活自理與尊嚴，各式輔具成為家中不可或缺的成員。</p>
+                            <ul class="space-y-3">
+                                <li class="flex justify-between items-center border-b border-cyan-200 pb-2">
+                                    <span class="text-slate-700">功能性輪椅</span>
+                                    <span class="font-semibold text-cyan-900">$5,000 - $30,000+</span>
+                                </li>
+                                <li class="flex justify-between items-center border-b border-cyan-200 pb-2">
+                                    <span class="text-slate-700">氣墊床 (防壓瘡)</span>
+                                    <span class="font-semibold text-cyan-900">$8,000 - $20,000+</span>
+                                </li>
+                                <li class="flex justify-between items-center">
+                                    <span class="text-slate-700">電動護理床</span>
+                                    <span class="font-semibold text-cyan-900">$20,000 - $50,000+</span>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-                <p class="text-center mt-6 text-sm text-slate-500">註：以上為綜合報告估算，實際費用因個人病況與選擇的療法而異。一份一次性給付的重大傷病險，能讓您在第一時間有權利選擇最好的治療。</p>
-            </div>
-
-            <div class="mt-16 bg-white p-6 md:p-8 rounded-xl shadow-lg">
-                <h3 class="text-xl font-bold mb-6 text-center">康復之路的隱藏成本：營養與輔具</h3>
-                <p class="text-center text-slate-600 mb-8 max-w-3xl mx-auto">治療結束不代表花費停止。為了加速恢復、提升生活品質，營養補充與輔助器材是筆龐大且持續的開銷，而這些幾乎都不在健保的給付範圍內。</p>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="bg-amber-50 p-6 rounded-lg border border-amber-200">
-                        <h4 class="font-bold text-lg text-amber-800 mb-3">營養補充品：身體的燃料</h4>
-                        <p class="text-sm text-slate-600 mb-4">尤其在癌症治療期間，病患常因副作用導致食慾不振、體重下降。充足的營養是維持體力、完成療程的關鍵。</p>
-                        <ul class="space-y-3">
-                            <li class="flex justify-between items-center border-b border-amber-200 pb-2">
-                                <span class="text-slate-700">癌症專用營養配方</span>
-                                <span class="font-semibold text-amber-900">每月 $8,000+</span>
-                            </li>
-                            <li class="flex justify-between items-center border-b border-amber-200 pb-2">
-                                <span class="text-slate-700">高蛋白/均衡營養品</span>
-                                <span class="font-semibold text-amber-900">每月 $5,000+</span>
-                            </li>
-                            <li class="flex justify-between items-center">
-                                <span class="text-slate-700">其他保健食品</span>
-                                <span class="font-semibold text-amber-900">因人而異</span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="bg-cyan-50 p-6 rounded-lg border border-cyan-200">
-                        <h4 class="font-bold text-lg text-cyan-800 mb-3">輔助器材：生活的支撐</h4>
-                        <p class="text-sm text-slate-600 mb-4">中風或意外失能後，為了維持基本生活自理與尊嚴，各式輔具成為家中不可或缺的成員。</p>
-                        <ul class="space-y-3">
-                            <li class="flex justify-between items-center border-b border-cyan-200 pb-2">
-                                <span class="text-slate-700">功能性輪椅</span>
-                                <span class="font-semibold text-cyan-900">$5,000 - $30,000+</span>
-                            </li>
-                            <li class="flex justify-between items-center border-b border-cyan-200 pb-2">
-                                <span class="text-slate-700">氣墊床 (防壓瘡)</span>
-                                <span class="font-semibold text-cyan-900">$8,000 - $20,000+</span>
-                            </li>
-                            <li class="flex justify-between items-center">
-                                <span class="text-slate-700">電動護理床</span>
-                                <span class="font-semibold text-cyan-900">$20,000 - $50,000+</span>
-                            </li>
-                        </ul>
-                    </div>
+                <div class="mt-16 text-center">
+                     <h3 class="text-xl font-bold mb-4">意外險的核心價值：失能的雙重打擊</h3>
+                     <div class="max-w-4xl mx-auto bg-slate-100 p-6 rounded-lg grid grid-cols-1 md:grid-cols-3 items-center gap-6">
+                        <div class="text-red-600">
+                            <p class="text-2xl font-bold">100% 收入中斷</p>
+                            <p class="text-sm">未來數十年的賺錢能力歸零</p>
+                        </div>
+                        <div class="text-5xl font-bold text-slate-500">+</div>
+                        <div class="text-blue-600">
+                            <p class="text-2xl font-bold">每日開銷劇增</p>
+                            <p class="text-sm">看護、耗材、復健，樣樣是錢</p>
+                        </div>
+                     </div>
+                     <p class="mt-4 text-slate-600">意外險最重要的價值，是轉嫁「活下來，但無法好好活著」的失能風險，保障您與家庭的經濟生命。</p>
                 </div>
             </div>
+        </section>
 
-            <div class="mt-16 text-center">
-                 <h3 class="text-xl font-bold mb-4">意外險的核心價值：失能的雙重打擊</h3>
-                 <div class="max-w-4xl mx-auto bg-slate-100 p-6 rounded-lg grid grid-cols-1 md:grid-cols-3 items-center gap-6">
-                    <div class="text-red-600">
-                        <p class="text-2xl font-bold">100% 收入中斷</p>
-                        <p class="text-sm">未來數十年的賺錢能力歸零</p>
-                    </div>
-                    <div class="text-5xl font-bold text-slate-500">+</div>
-                    <div class="text-blue-600">
-                        <p class="text-2xl font-bold">每日開銷劇增</p>
-                        <p class="text-sm">看護、耗材、復健，樣樣是錢</p>
-                    </div>
-                 </div>
-                 <p class="mt-4 text-slate-600">意外險最重要的價值，是轉嫁「活下來，但無法好好活著」的失能風險，保障您與家庭的經濟生命。</p>
-            </div>
-        </div>
-    </section>
-
-    <section id="planning" class="py-16">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-slate-900">不同人生階段的保障規劃</h2>
-                 <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">保險規劃並非一成不變，它必須隨著我們的年齡、責任與預算進行調整。點選下方頁籤，看看您現階段的規劃重點。</p>
-            </div>
-             <div class="mt-12 max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg">
-                <div class="border-b border-slate-200">
-                    <nav class="-mb-px flex space-x-4" aria-label="Tabs">
-                        <button data-tab="tab1" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">社會新鮮人 (25-35歲)</button>
-                        <button data-tab="tab2" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">家庭支柱 (35-55歲)</button>
-                        <button data-tab="tab3" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">準退休族 (55歲+)</button>
-                    </nav>
+        <section id="planning" class="main-section py-16">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-slate-900">不同人生階段的保障規劃</h2>
+                     <p class="mt-4 max-w-3xl mx-auto text-lg text-slate-600">保險規劃並非一成不變，它必須隨著我們的年齡、責任與預算進行調整。點選下方頁籤，看看您現階段的規劃重點。</p>
                 </div>
-                <div class="mt-6">
-                    <div id="tab1" class="tab-content">
-                        <h4 class="font-bold text-teal-700">策略：低保費、高保障</h4>
-                        <p class="text-sm text-slate-600 mt-1 mb-4">預算有限，善用定期險，將保障槓桿拉到最大。</p>
-                        <ul class="space-y-3 text-slate-700 list-disc list-inside">
-                            <li><span class="font-semibold">實支實付醫療險：</span>核心中的核心，雜費額度至少20-30萬，應對新式手術與耗材。</li>
-                            <li><span class="font-semibold">意外險：</span>保障通勤風險與工作能力，失能額度300-500萬。</li>
-                            <li><span class="font-semibold">重大傷病/癌症險：</span>額度至少100萬，作為第一筆緊急預備金，確保有權利選擇更好的治療。</li>
-                        </ul>
+                 <div class="mt-12 max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg">
+                    <div class="border-b border-slate-200">
+                        <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                            <button data-tab="tab1" class="tab-button active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">社會新鮮人 (25-35歲)</button>
+                            <button data-tab="tab2" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">家庭支柱 (35-55歲)</button>
+                            <button data-tab="tab3" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300">準退休族 (55歲+)</button>
+                        </nav>
                     </div>
-                    <div id="tab2" class="tab-content hidden">
-                        <h4 class="font-bold text-teal-700">策略：保障做足、缺口補齊</h4>
-                        <p class="text-sm text-slate-600 mt-1 mb-4">家庭責任最重，頂樑柱絕對不能倒。</p>
-                         <ul class="space-y-3 text-slate-700 list-disc list-inside">
-                            <li><span class="font-semibold">拉高壽險額度：</span>需涵蓋所有負債（房貸、信貸）與未來5-10年生活費。</li>
-                            <li><span class="font-semibold">規劃「雙實支實付」：</span>一張付醫療費，一張補薪資損失與看護開銷。</li>
-                            <li><span class="font-semibold">提高重疾/癌症險額度：</span>至200-300萬，保障家庭正常運轉。</li>
-                            <li><span class="font-semibold">補強失能險：</span>包含一次金與分期扶助金，應對因疾病或意外造成的長期失能風險。</li>
-                        </ul>
-                    </div>
-                    <div id="tab3" class="tab-content hidden">
-                        <h4 class="font-bold text-teal-700">策略：檢視缺口、補強特定風險</h4>
-                        <p class="text-sm text-slate-600 mt-1 mb-4">醫療需求攀升，保費變貴，需精準規劃。</p>
-                         <ul class="space-y-3 text-slate-700 list-disc list-inside">
-                            <li><span class="font-semibold">進行「保單健診」：</span>全面檢視舊保單，確認保障是否足夠應對現在的醫療花費。</li>
-                            <li><span class="font-semibold">強化意外險：</span>注意是否有「骨折未住院津貼」保障，並考慮提高額度。</li>
-                            <li><span class="font-semibold">實支實付醫療險：</span>若體況允許，此為最重要的醫療防線，務必保留或補強。</li>
-                            <li><span class="font-semibold">小額終身壽險：</span>預留身後事費用，走得有尊嚴，不給子女增添負擔。</li>
-                        </ul>
+                    <div class="mt-6">
+                        <div id="tab1" class="tab-content">
+                            <h4 class="font-bold text-teal-700">策略：低保費、高保障</h4>
+                            <p class="text-sm text-slate-600 mt-1 mb-4">預算有限，善用定期險，將保障槓桿拉到最大。</p>
+                            <ul class="space-y-3 text-slate-700 list-disc list-inside">
+                                <li><span class="font-semibold">實支實付醫療險：</span>核心中的核心，雜費額度至少20-30萬，應對新式手術與耗材。</li>
+                                <li><span class="font-semibold">意外險：</span>保障通勤風險與工作能力，失能額度300-500萬。</li>
+                                <li><span class="font-semibold">重大傷病/癌症險：</span>額度至少100萬，作為第一筆緊急預備金，確保有權利選擇更好的治療。</li>
+                            </ul>
+                        </div>
+                        <div id="tab2" class="tab-content hidden">
+                            <h4 class="font-bold text-teal-700">策略：保障做足、缺口補齊</h4>
+                            <p class="text-sm text-slate-600 mt-1 mb-4">家庭責任最重，頂樑柱絕對不能倒。</p>
+                             <ul class="space-y-3 text-slate-700 list-disc list-inside">
+                                <li><span class="font-semibold">拉高壽險額度：</span>需涵蓋所有負債（房貸、信貸）與未來5-10年生活費。</li>
+                                <li><span class="font-semibold">規劃「雙實支實付」：</span>一張付醫療費，一張補薪資損失與看護開銷。</li>
+                                <li><span class="font-semibold">提高重疾/癌症險額度：</span>至200-300萬，保障家庭正常運轉。</li>
+                                <li><span class="font-semibold">補強失能險：</span>包含一次金與分期扶助金，應對因疾病或意外造成的長期失能風險。</li>
+                            </ul>
+                        </div>
+                        <div id="tab3" class="tab-content hidden">
+                            <h4 class="font-bold text-teal-700">策略：檢視缺口、補強特定風險</h4>
+                            <p class="text-sm text-slate-600 mt-1 mb-4">醫療需求攀升，保費變貴，需精準規劃。</p>
+                             <ul class="space-y-3 text-slate-700 list-disc list-inside">
+                                <li><span class="font-semibold">進行「保單健診」：</span>全面檢視舊保單，確認保障是否足夠應對現在的醫療花費。</li>
+                                <li><span class="font-semibold">強化意外險：</span>注意是否有「骨折未住院津貼」保障，並考慮提高額度。</li>
+                                <li><span class="font-semibold">實支實付醫療險：</span>若體況允許，此為最重要的醫療防線，務必保留或補強。</li>
+                                <li><span class="font-semibold">小額終身壽險：</span>預留身後事費用，走得有尊嚴，不給子女增添負擔。</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </div>
 
-    <footer class="bg-slate-800 text-white mt-16">
+    <footer class="bg-slate-800 text-white">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
             <h2 class="text-2xl font-bold">保險，是寫給未來家人的一封情書。</h2>
-            <p class="mt-4 max-w-2xl mx-auto text-slate-300">規劃，是為了當風險來臨時，我們最愛的人生活不會被改變。您的安心，是我最大的使命。現在就讓我們一起，為您量身打造專屬的守護計畫。</p>
-            <button class="mt-8 bg-teal-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:bg-teal-500 transition-colors" onclick="alert('感謝您的探索！請與您的專屬顧問聯繫，進行一對一諮詢。')">
-                立即與我聯繫
-            </button>
+            <p class="mt-4 max-w-2xl mx-auto text-slate-300">規劃，是為了當風險來臨時，我們最愛的人生活不會被改變。您的安心，是我最大的使命。請與您的專屬顧問聯繫，開始為您量身打造守護計畫。</p>
         </div>
     </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // --- DATA ---
             const hospitalData = {
                 '北部': {
                     '醫學中心': { '雙人房': [1900, 3500], '單人房(一般)': [3600, 8000], '單人房(特等)': [8000, 25000] },
@@ -335,7 +322,6 @@
                     '區域醫院': { '雙人房': [1000, 2000], '單人房(一般)': [2320, 4000], '單人房(特等)': [4000, 4000] }
                 }
             };
-
             const consumablesData = [
                 { id: 'consumable1', name: '防沾黏貼片/凝膠', cost: 16000, description: '預防術後器官沾黏，減少後遺症' },
                 { id: 'consumable2', name: '自控式止痛 (PCA)', cost: 8000, description: '提升術後生活品質，有助恢復' },
@@ -344,111 +330,94 @@
                 { id: 'consumable5', name: '拋棄式手術器械 (如超音波刀)', cost: 35000, description: '減少組織熱傷害，提升手術精準度' },
             ];
 
-            const consumablesListEl = document.getElementById('consumables-list');
-            const consumablesTotalCostEl = document.getElementById('consumables-total-cost');
-            
-            consumablesData.forEach(item => {
-                const itemHtml = `
-                    <label for="${item.id}" class="consumable-item flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer transition-colors hover:bg-slate-100">
-                        <input type="checkbox" id="${item.id}" data-cost="${item.cost}" class="h-5 w-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
-                        <span class="ml-3 flex-grow">
-                            <span class="font-medium text-slate-800">${item.name}</span>
-                            <span class="block text-sm text-slate-500">${item.description}</span>
-                        </span>
-                        <span class="font-semibold text-slate-700">NT$ ${item.cost.toLocaleString()}</span>
-                    </label>
-                `;
-                consumablesListEl.innerHTML += itemHtml;
-            });
-            
-            function updateConsumablesTotal() {
-                let total = 0;
-                const checkedItems = document.querySelectorAll('#consumables-list input:checked');
-                checkedItems.forEach(item => {
-                    total += parseInt(item.dataset.cost);
-                });
-                consumablesTotalCostEl.textContent = 'NT$ ' + total.toLocaleString();
-            }
-            
-            consumablesListEl.addEventListener('change', updateConsumablesTotal);
+            // --- PAGE NAVIGATION ---
+            const mainSections = document.querySelectorAll('.main-section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mobileNav = document.getElementById('mobile-nav');
 
+            window.showPage = function(pageId) {
+                mainSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                const activePage = document.getElementById(pageId);
+                if (activePage) {
+                    activePage.style.display = 'block';
+                }
+
+                navLinks.forEach(link => {
+                    if (link.dataset.page === pageId) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                
+                if (mobileNav.value !== pageId) {
+                    mobileNav.value = pageId;
+                }
+                window.scrollTo(0, 0);
+            }
+            mobileNav.addEventListener('change', (e) => showPage(e.target.value));
+            
+            // --- HOSPITAL CHART ---
             const ctx = document.getElementById('hospitalCostChart').getContext('2d');
             const hospitalCostChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['雙人房', '單人房(一般)', '單人房(特等)'],
-                    datasets: [{
-                        label: '每日最低差額', data: [], backgroundColor: 'rgba(20, 184, 166, 0.6)', borderWidth: 1
-                    }, {
-                        label: '每日最高差額', data: [], backgroundColor: 'rgba(244, 63, 94, 0.6)', borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-                    scales: { x: { beginAtZero: true, ticks: { callback: value => 'NT$ ' + value.toLocaleString() } } },
-                    plugins: {
-                        title: { display: true, text: '病房差額費用範圍' },
-                        tooltip: { callbacks: { label: context => `${context.dataset.label}: ${new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 0 }).format(context.parsed.x)}` } }
-                    }
-                }
+                type: 'bar', data: { labels: ['雙人房', '單人房(一般)', '單人房(特等)'], datasets: [{ label: '每日最低差額', data: [], backgroundColor: 'rgba(20, 184, 166, 0.6)', borderWidth: 1 }, { label: '每日最高差額', data: [], backgroundColor: 'rgba(244, 63, 94, 0.6)', borderWidth: 1 }] },
+                options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { callback: value => 'NT$ ' + value.toLocaleString() } } }, plugins: { title: { display: true, text: '病房差額費用範圍' }, tooltip: { callbacks: { label: context => `${context.dataset.label}: ${new Intl.NumberFormat('zh-TW', { style: 'currency', currency: 'TWD', minimumFractionDigits: 0 }).format(context.parsed.x)}` } } } }
             });
-
             const regionSelect = document.getElementById('region-select');
             const hospitalLevelSelect = document.getElementById('hospital-level-select');
-
             function updateChart() {
                 const region = regionSelect.value;
                 const level = hospitalLevelSelect.value;
                 const data = hospitalData[region][level];
-                
                 hospitalCostChart.data.datasets[0].data = [data['雙人房'][0], data['單人房(一般)'][0], data['單人房(特等)'][0]];
                 hospitalCostChart.data.datasets[1].data = [data['雙人房'][1], data['單人房(一般)'][1], data['單人房(特等)'][1]];
                 hospitalCostChart.options.plugins.title.text = `${region}地區 - ${level} - 病房差額費用範圍`;
                 hospitalCostChart.update();
             }
-
             regionSelect.addEventListener('change', updateChart);
             hospitalLevelSelect.addEventListener('change', updateChart);
-            updateChart();
-            
+
+            // --- CONSUMABLES CALCULATOR ---
+            const consumablesListEl = document.getElementById('consumables-list');
+            const consumablesTotalCostEl = document.getElementById('consumables-total-cost');
+            consumablesData.forEach(item => {
+                consumablesListEl.innerHTML += `<label for="${item.id}" class="consumable-item flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer transition-colors hover:bg-slate-100"><input type="checkbox" id="${item.id}" data-cost="${item.cost}" class="h-5 w-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500"><span class="ml-3 flex-grow"><span class="font-medium text-slate-800">${item.name}</span><span class="block text-sm text-slate-500">${item.description}</span></span><span class="font-semibold text-slate-700">NT$ ${item.cost.toLocaleString()}</span></label>`;
+            });
+            function updateConsumablesTotal() {
+                let total = 0;
+                document.querySelectorAll('#consumables-list input:checked').forEach(item => { total += parseInt(item.dataset.cost); });
+                consumablesTotalCostEl.textContent = 'NT$ ' + total.toLocaleString();
+            }
+            consumablesListEl.addEventListener('change', updateConsumablesTotal);
+
+            // --- CAREGIVER SLIDER ---
             const caregiverSlider = document.getElementById('caregiver-days');
             const caregiverDaysLabel = document.getElementById('caregiver-days-label');
             const caregiverTotalCost = document.getElementById('caregiver-total-cost');
             const dailyRate = 3500;
-
             caregiverSlider.addEventListener('input', function() {
                 const days = this.value;
                 caregiverDaysLabel.textContent = days;
-                const total = days * dailyRate;
-                caregiverTotalCost.textContent = 'NT$ ' + total.toLocaleString();
+                caregiverTotalCost.textContent = 'NT$ ' + (days * dailyRate).toLocaleString();
             });
-            
+
+            // --- LIFE STAGE TABS ---
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabContents = document.querySelectorAll('.tab-content');
-
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const tabId = button.dataset.tab;
                     tabButtons.forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
-                    tabContents.forEach(content => {
-                        content.classList.toggle('hidden', content.id !== tabId);
-                    });
+                    tabContents.forEach(content => { content.classList.toggle('hidden', content.id !== tabId); });
                 });
             });
 
-            const mobileNav = document.getElementById('mobile-nav');
-            mobileNav.addEventListener('change', function() {
-                if (this.value) {
-                    const targetElement = document.querySelector(this.value);
-                    if (targetElement) {
-                       window.scrollTo({
-                           top: targetElement.offsetTop - 70, 
-                           behavior: 'smooth'
-                       });
-                    }
-                }
-            });
+            // --- INITIALIZE ---
+            showPage('hero');
+            updateChart();
         });
     </script>
 </body>
